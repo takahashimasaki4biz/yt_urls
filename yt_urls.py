@@ -12,10 +12,18 @@ def load_html(file_path):
 
 
 def list_ytd_rich_item_renderer(soup):
-    div_contents = soup.find('div', id='contents')
-    if div_contents:
-        return div_contents.find_all('ytd-rich-item-renderer', recursive=False)
-    return []
+    return soup.find_all('ytd-rich-item-renderer', recursive=True)
+
+
+def extract_video_data(videos):
+    video_data = []
+    for video in reversed(videos):
+        a = video.find('a', id='video-title-link')
+        url = a['href']
+        title = html.unescape(a['title'])
+        celltext = f'=HYPERLINK("{url}", "{title}")'
+        video_data.append([celltext])
+    return video_data
 
 
 def save_to_excel(data, channel_name, file_name='urls.xlsx'):
@@ -34,14 +42,7 @@ def main():
     soup = load_html(file_path)
     channel_name = soup.title.string.split(' - ')[0]
     videos = list_ytd_rich_item_renderer(soup)
-    video_data = []
-    for video in reversed(videos):
-        a = video.find('a', id='video-title-link')
-        url = a['href']
-        title = html.unescape(a['title'])
-        celltext = f'=HYPERLINK("{url}", "{title}")'
-        video_data.append([celltext])
-
+    video_data = extract_video_data(videos)
     save_to_excel(video_data, channel_name)
 
 
